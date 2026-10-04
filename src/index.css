@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #050806;
+    color: #c9f5cf;
+    font-family: 'Fira Code', 'Share Tech Mono', monospace;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050806;
+}
+::-webkit-scrollbar-thumb {
+  background: #00ff6633;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff6688;
+}
+
+/* CRT Scanlines Overlay */
+.crt-scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.35) 50%
+  ),
+  linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+/* CRT Screen Glow */
+.crt-glow {
+  box-shadow: inset 0 0 80px rgba(0, 255, 102, 0.08), 0 0 20px rgba(0, 255, 102, 0.05);
+}
+
+/* Text glow */
+.text-glow-green {
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+/* Official Google Sign-in Button styling */
+.gsi-material-button {
+  background-color: #131314;
+  background-image: none;
+  border: 1px solid #747775;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: #e3e3e3;
+  cursor: pointer;
+  font-family: 'Roboto', arial, sans-serif;
+  font-size: 14px;
+  height: 38px;
+  letter-spacing: 0.25px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 12px;
+  position: relative;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.gsi-material-button:hover {
+  background-color: #202124;
+  border-color: #8e918f;
+}
+
+.gsi-material-button-content-wrapper {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  height: 100%;
+  position: relative;
+  width: 100%;
+}
+
+.gsi-material-button-icon {
+  height: 20px;
+  margin-right: 10px;
+  min-width: 20px;
+  width: 20px;
+}
+
+.gsi-material-button-contents {
+  font-weight: 500;
+  font-size: 13px;
+}

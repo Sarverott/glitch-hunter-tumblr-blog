@@ -1,0 +1,6 @@
+{
+  "name": "Glitch Hunter // Public Display Anomalies",
+  "description": "Matrix-styled tumblr theme, public display glitch telemetry tracker, TOTP-verified submissions, Google Workspace audit reports, and AI vision forensics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
