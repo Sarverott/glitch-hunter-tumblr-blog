@@ -341,6 +341,28 @@ export const generateTumblrThemeHtml = (options?: {
             grid-column: 1 / -1;
         }
 
+        /* Single Post Reading Mode (Permalink Pages) */
+        body.permalink-page #posts {
+            display: block;
+            max-width: 820px;
+            margin: 0 auto 40px auto;
+        }
+
+        body.permalink-page .post {
+            grid-column: 1 / -1;
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        body.permalink-page .post-content img {
+            max-height: none;
+            width: 100%;
+        }
+
+        body.permalink-page .system-banner {
+            display: none;
+        }
+
         .post:hover {
             border-color: rgba(0, 255, 102, 0.6);
             transform: translateY(-2px);
@@ -447,7 +469,7 @@ export const generateTumblrThemeHtml = (options?: {
         {CustomCSS}
     </style>
 </head>
-<body>
+<body class="{block:IndexPage}index-page{/block:IndexPage}{block:PermalinkPage}permalink-page{/block:PermalinkPage}">
 
     <!-- STICKY HACKER HUD -->
     <header id="terminal-hud">
@@ -575,10 +597,11 @@ export const generateTumblrThemeHtml = (options?: {
         <!-- PAGINATION -->
         <footer id="footer-nav">
             {block:Pagination}
-                {block:PreviousPage}<a href="{PreviousPage}">&lt; NEWER DISCOVERIES</a>{/block:PreviousPage}
-                {block:NextPage}<a href="{NextPage}">OLDER ARCHIVES &gt;</a>{/block:NextPage}
+                {block:PreviousPage}<a href="{PreviousPage}" class="btn-pager">&lt;&lt; NEWER DISCOVERIES</a>{/block:PreviousPage}
+                <span class="pager-status">PAGE {CurrentPage} / {TotalPages}</span>
+                {block:NextPage}<a href="{NextPage}" class="btn-pager">OLDER ARCHIVES &gt;&gt;</a>{/block:NextPage}
             {/block:Pagination}
-            <a href="/archive">[FULL TELEMETRY ARCHIVE]</a>
+            <a href="/archive" class="btn-pager">[FULL TELEMETRY ARCHIVE]</a>
         </footer>
     </div>
 </body>

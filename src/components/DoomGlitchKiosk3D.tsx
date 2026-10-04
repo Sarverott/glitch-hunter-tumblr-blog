@@ -193,7 +193,7 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({
     }
 
     // 2. Heavy CRT Monitor Housing (Slanted retro industrial enclosure)
-    const monitorGeo = new THREE.BoxGeometry(2.0, 1.5, 1.4, 2, 2, 2);
+    const monitorGeo = new THREE.BoxGeometry(1.9, 1.45, 1.3, 2, 2, 2);
     const monitorMat = new THREE.MeshStandardMaterial({
       color: 0x222823,
       roughness: 0.7,
@@ -205,51 +205,61 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({
     monitorMesh.rotation.x = -0.08;
     kioskGroup.add(monitorMesh);
 
-    // Monitor Bezel Frame (Beveled CRT border)
-    const bezelGeo = new THREE.BoxGeometry(1.7, 1.25, 0.15);
+    // Frame Bezel Border around the CRT (Framed aperture so screen never clips)
     const bezelMat = new THREE.MeshStandardMaterial({
       color: 0x0c0f0d,
       roughness: 0.9,
       flatShading: true,
     });
-    const bezelMesh = new THREE.Mesh(bezelGeo, bezelMat);
-    bezelMesh.position.set(0, 1.0, 0.65);
-    bezelMesh.rotation.x = -0.08;
-    kioskGroup.add(bezelMesh);
 
-    // 3. Curved Low-poly CRT Glass Screen (Emits dynamic canvas texture)
-    const screenGeo = new THREE.PlaneGeometry(1.48, 1.08, 8, 8);
-    // Subtle vertex curve for retro CRT bulb distortion
-    const posAttr = screenGeo.attributes.position;
-    for (let i = 0; i < posAttr.count; i++) {
-      const x = posAttr.getX(i);
-      const y = posAttr.getY(i);
-      const distFromCenter = (x * x + y * y) * 0.08;
-      posAttr.setZ(i, -distFromCenter);
-    }
-    screenGeo.computeVertexNormals();
+    const bezelGroup = new THREE.Group();
+    bezelGroup.position.set(0, 1.0, 0.65);
+    bezelGroup.rotation.x = -0.08;
+    kioskGroup.add(bezelGroup);
 
+    // Top border
+    const topBezel = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.12, 0.12), bezelMat);
+    topBezel.position.set(0, 0.61, 0.04);
+    bezelGroup.add(topBezel);
+
+    // Bottom border
+    const btmBezel = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.12, 0.12), bezelMat);
+    btmBezel.position.set(0, -0.61, 0.04);
+    bezelGroup.add(btmBezel);
+
+    // Left border
+    const leftBezel = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.12, 0.12), bezelMat);
+    leftBezel.position.set(-0.8, 0, 0.04);
+    bezelGroup.add(leftBezel);
+
+    // Right border
+    const rightBezel = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.12, 0.12), bezelMat);
+    rightBezel.position.set(0.8, 0, 0.04);
+    bezelGroup.add(rightBezel);
+
+    // 3. Full Low-poly 4:3 CRT Glass Screen (Emits dynamic canvas texture without clipping)
+    const screenGeo = new THREE.PlaneGeometry(1.48, 1.11);
     const screenMat = new THREE.MeshBasicMaterial({
       map: screenTexture,
       toneMapped: false,
     });
 
     const screenMesh = new THREE.Mesh(screenGeo, screenMat);
-    screenMesh.position.set(0, 1.0, 0.73);
+    screenMesh.position.set(0, 1.0, 0.71);
     screenMesh.rotation.x = -0.08;
     kioskGroup.add(screenMesh);
     screenMeshRef.current = screenMesh;
 
     // Glowing screen phosphor halo
-    const glowGeo = new THREE.PlaneGeometry(1.52, 1.12);
+    const glowGeo = new THREE.PlaneGeometry(1.5, 1.13);
     const glowMat = new THREE.MeshBasicMaterial({
       color: 0x00ff66,
       transparent: true,
-      opacity: 0.08,
+      opacity: 0.06,
       blending: THREE.AdditiveBlending,
     });
     const glowMesh = new THREE.Mesh(glowGeo, glowMat);
-    glowMesh.position.set(0, 1.0, 0.74);
+    glowMesh.position.set(0, 1.0, 0.715);
     glowMesh.rotation.x = -0.08;
     kioskGroup.add(glowMesh);
 
