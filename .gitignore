@@ -1,6 +1,7 @@
 node_modules/
 build/
 dist/
+dist-tumblr/
 coverage/
 .DS_Store
 *.log

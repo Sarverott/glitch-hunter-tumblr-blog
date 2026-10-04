@@ -1,11 +1,12 @@
 /**
  * TumblrThemeViewer.tsx
- * Live interactive preview of glitch-hunter.tumblr.com and Tumblr HTML Theme Code exporter
+ * Live interactive preview of glitch-hunter.tumblr.com, Main Theme HTML Code exporter,
+ * and Dedicated Embedded /contact Subpage HTML Code exporter.
  * Documented according to https://www.tumblr.com/docs/pl/custom_themes
  */
 
 import React, { useState } from 'react';
-import { TumblrPost, generateTumblrThemeHtml } from '../services/tumblrTheme';
+import { TumblrPost, generateTumblrThemeHtml, generateTumblrContactPageHtml } from '../services/tumblrTheme';
 import {
   Code,
   Eye,
@@ -14,10 +15,9 @@ import {
   Download,
   Heart,
   Repeat,
-  Share2,
   Tag,
   ShieldCheck,
-  ExternalLink,
+  FileCode2,
   Sliders,
 } from 'lucide-react';
 
@@ -30,15 +30,16 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
   posts,
   onOpenSubmitForm,
 }) => {
-  const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [activeTab, setActiveTab] = useState<'preview' | 'theme-code' | 'contact-code'>('preview');
+  const [copiedThemeCode, setCopiedThemeCode] = useState(false);
+  const [copiedContactCode, setCopiedContactCode] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   // Theme customizations
-  const [accentColor, setAccentColor] = useState('#00ff66');
-  const [bgColor, setBgColor] = useState('#0a0d0b');
-  const [blogTitle, setBlogTitle] = useState('GLITCH HUNTER // IN THE WILD');
+  const [accentColor] = useState('#00ff66');
+  const [bgColor] = useState('#0a0d0b');
+  const [blogTitle] = useState('GLITCH HUNTER // IN THE WILD');
 
   const themeHtmlCode = generateTumblrThemeHtml({
     accentColor,
@@ -46,10 +47,21 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
     blogTitle,
   });
 
-  const handleCopyCode = () => {
+  const contactSubpageHtmlCode = generateTumblrContactPageHtml({
+    accentColor,
+    bgColor,
+  });
+
+  const handleCopyThemeCode = () => {
     navigator.clipboard.writeText(themeHtmlCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
+    setCopiedThemeCode(true);
+    setTimeout(() => setCopiedThemeCode(false), 2000);
+  };
+
+  const handleCopyContactCode = () => {
+    navigator.clipboard.writeText(contactSubpageHtmlCode);
+    setCopiedContactCode(true);
+    setTimeout(() => setCopiedContactCode(false), 2000);
   };
 
   const handleDownloadTheme = () => {
@@ -58,6 +70,16 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
     const a = document.createElement('a');
     a.href = url;
     a.download = 'glitch-hunter-tumblr-theme.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadContactPage = () => {
+    const blob = new Blob([contactSubpageHtmlCode], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'glitch-hunter-contact-page.html';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -88,7 +110,7 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
         </div>
 
         {/* View Mode Tabs */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setActiveTab('preview')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition ${
@@ -100,16 +122,29 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
             <Eye className="h-3.5 w-3.5" />
             Live Blog Preview
           </button>
+
           <button
-            onClick={() => setActiveTab('code')}
+            onClick={() => setActiveTab('theme-code')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition ${
-              activeTab === 'code'
+              activeTab === 'theme-code'
                 ? 'bg-emerald-500 text-black font-bold shadow-[0_0_15px_rgba(0,255,102,0.4)]'
                 : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-700'
             }`}
           >
             <Code className="h-3.5 w-3.5" />
-            Theme HTML Code
+            Main Theme HTML (theme.html)
+          </button>
+
+          <button
+            onClick={() => setActiveTab('contact-code')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition ${
+              activeTab === 'contact-code'
+                ? 'bg-emerald-500 text-black font-bold shadow-[0_0_15px_rgba(0,255,102,0.4)]'
+                : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-700'
+            }`}
+          >
+            <FileCode2 className="h-3.5 w-3.5" />
+            Embedded /contact Subpage
           </button>
         </div>
       </div>
@@ -132,14 +167,14 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
                     : 'border-zinc-800 text-zinc-400 hover:text-white'
                 }`}
               >
-                /all-posts
+                /feed
               </button>
 
               <button
                 onClick={onOpenSubmitForm}
                 className="px-2.5 py-1 rounded border border-emerald-500 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 font-bold text-[11px] transition"
               >
-                /contact [submit glitch]
+                /contact [embedded form]
               </button>
             </div>
           </div>
@@ -297,26 +332,26 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
             })}
           </div>
         </div>
-      ) : (
-        /* THEME HTML CODE VIEW */
+      ) : activeTab === 'theme-code' ? (
+        /* MAIN THEME HTML CODE VIEW */
         <div className="space-y-4">
           <div className="rounded border border-emerald-500/30 bg-black/80 p-4">
             <h4 className="text-sm font-bold text-emerald-400 mb-2 flex items-center gap-2">
-              <Sliders className="h-4 w-4" /> THEME OPERATORS & CUSTOM METADATA
+              <Sliders className="h-4 w-4" /> MAIN BLOG THEME (theme.html)
             </h4>
             <p className="text-xs text-zinc-400 mb-4">
-              This code is 100% compatible with Tumblr's custom HTML theme specification. Copy this code, go to your Tumblr dashboard at{' '}
+              This code powers the main blog theme. Go to your Tumblr dashboard at{' '}
               <span className="text-emerald-300 font-bold">glitch-hunter.tumblr.com/customize</span>, click <strong>"Edit HTML"</strong>, and paste.
             </p>
 
             {/* Quick Actions */}
             <div className="flex flex-wrap items-center gap-3">
               <button
-                onClick={handleCopyCode}
+                onClick={handleCopyThemeCode}
                 className="flex items-center gap-1.5 px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs transition shadow-[0_0_20px_rgba(0,255,102,0.3)]"
               >
-                {copiedCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copiedCode ? 'Theme Code Copied!' : 'Copy Entire Theme HTML'}
+                {copiedThemeCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copiedThemeCode ? 'Theme Code Copied!' : 'Copy Main Theme HTML'}
               </button>
 
               <button
@@ -324,7 +359,7 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
                 className="flex items-center gap-1.5 px-4 py-2 rounded border border-emerald-500/40 bg-zinc-900 hover:bg-zinc-800 text-emerald-300 text-xs transition font-semibold"
               >
                 <Download className="h-4 w-4" />
-                Download theme.html
+                Download glitch-hunter-tumblr-theme.html
               </button>
             </div>
           </div>
@@ -333,6 +368,42 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
           <div className="relative rounded border border-emerald-500/30 bg-[#040605] p-4 max-h-[500px] overflow-y-auto">
             <pre className="text-xs text-emerald-400/90 font-mono leading-relaxed whitespace-pre-wrap">
               {themeHtmlCode}
+            </pre>
+          </div>
+        </div>
+      ) : (
+        /* EMBEDDED /CONTACT SUBPAGE CODE VIEW */
+        <div className="space-y-4">
+          <div className="rounded border border-emerald-500/30 bg-black/80 p-4">
+            <h4 className="text-sm font-bold text-emerald-400 mb-2 flex items-center gap-2">
+              <FileCode2 className="h-4 w-4" /> EMBEDDED /CONTACT SUBPAGE (contact-page.html)
+            </h4>
+            <p className="text-xs text-zinc-400 mb-4">
+              Self-contained custom page for <span className="text-emerald-300 font-bold">glitch-hunter.tumblr.com/contact</span>. Go to Tumblr Dashboard &rarr; <strong>Settings</strong> &rarr; <strong>glitch-hunter</strong> &rarr; <strong>Pages</strong> &rarr; <strong>Add a page</strong> &rarr; URL: <code>/contact</code> &rarr; toggle <strong>"Custom layout"</strong> &rarr; paste this HTML!
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleCopyContactCode}
+                className="flex items-center gap-1.5 px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs transition shadow-[0_0_20px_rgba(0,255,102,0.3)]"
+              >
+                {copiedContactCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copiedContactCode ? 'Subpage Code Copied!' : 'Copy /contact Subpage HTML'}
+              </button>
+
+              <button
+                onClick={handleDownloadContactPage}
+                className="flex items-center gap-1.5 px-4 py-2 rounded border border-emerald-500/40 bg-zinc-900 hover:bg-zinc-800 text-emerald-300 text-xs transition font-semibold"
+              >
+                <Download className="h-4 w-4" />
+                Download glitch-hunter-contact-page.html
+              </button>
+            </div>
+          </div>
+
+          <div className="relative rounded border border-emerald-500/30 bg-[#040605] p-4 max-h-[500px] overflow-y-auto">
+            <pre className="text-xs text-emerald-400/90 font-mono leading-relaxed whitespace-pre-wrap">
+              {contactSubpageHtmlCode}
             </pre>
           </div>
         </div>

@@ -20,8 +20,18 @@ import {
 } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
+// Dynamic Firebase configuration utilizing environment variables
+const clientConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (firebaseConfig as any)?.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || (firebaseConfig as any)?.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || (firebaseConfig as any)?.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || (firebaseConfig as any)?.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (firebaseConfig as any)?.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || (firebaseConfig as any)?.appId,
+};
+
 // Initialize Firebase App
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const app = getApps().length > 0 ? getApp() : initializeApp(clientConfig);
 export const auth = getAuth(app);
 
 // Provider with required Workspace scopes
@@ -172,38 +182,59 @@ export const uploadBackstageFile = async (
 };
 
 // -------------------------------------------------------------
-// 2. GMAIL: Submitter TOTP Verification Code Dispatch
+// 2. GMAIL: Automated Authority / Venue Incident Notification Dispatch
 // -------------------------------------------------------------
 
-export const sendTotpEmail = async (
+export interface AuthorityIncidentData {
+  incidentId: string;
+  venue: string;
+  location: string;
+  osDetected: string;
+  submitterCredit: string;
+  reportSummary: string;
+  remediationAdvice?: string;
+  attachedDocUrl?: string;
+}
+
+export const sendAuthorityIncidentNotification = async (
   token: string,
   recipientEmail: string,
-  totpCode: string,
-  tumblrHandle: string
+  data: AuthorityIncidentData
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
   try {
-    const subject = `[Glitch-Hunter Security] TOTP Verification Code: ${totpCode}`;
-    const bodyText = `[GLITCH-HUNTER.TUMBLR.COM // AUTHENTICATION DAEMON]
---------------------------------------------------------------
-Hello Hunter ${tumblrHandle ? `@${tumblrHandle}` : ''},
+    const subject = `[SECURITY NOTICE // REF ${data.incidentId}] Public Display Kiosk Breakout - ${data.venue}`;
+    const bodyText = `[GLITCH-HUNTER FORENSIC INCIDENT DISCLOSURE]
+========================================================================
+TO: Facility Management / IT Infrastructure / Municipal Display Authority
+SUBJECT: KIOSK SHELL BREAKOUT & DISPLAY MALFUNCTION ADVISORY
+INCIDENT ID: ${data.incidentId}
+TIMESTAMP: ${new Date().toUTCString()}
+VENUE / ASSET: ${data.venue}
+LOCATION: ${data.location}
+DETECTED OS & ENVIRONMENT: ${data.osDetected}
+DISCOVERED BY: Glitch Hunter (@${data.submitterCredit})
+========================================================================
 
-You requested a secure submission link to publish a public display glitch
-report on glitch-hunter.tumblr.com.
+1. INCIDENT OVERVIEW:
+A commercial public display screen at the referenced location was observed
+and documented to have crashed or exited its designated kiosk mode. Rather
+than displaying intended commercial or transit content, the display is exposing
+underlying operating system desktop components, system utilities, or crash dialogs.
 
-YOUR ONE-TIME VERIFICATION CODE (TOTP):
---------------------------------------------------------------
-                 >>>  ${totpCode}  <<<
---------------------------------------------------------------
-Valid for 10 minutes.
+2. FORENSIC SUMMARY & VULNERABILITY ASSESSMENT:
+${data.reportSummary}
 
-This verification guarantees authenticity and guards against bot spam,
-ensuring you receive verified contributor credit in our public database
-and Tumblr theme feed.
+3. RECOMMENDED SECURITY & REMEDIATION ACTIONS:
+${data.remediationAdvice || `- Immediately deploy Shell Launcher / Assigned Access policies to isolate the desktop shell.
+- Disable auto-login to administrator accounts on commercial signage units.
+- Block physical USB/peripherals on exposed kiosk ports.
+- Enforce watchdog process monitoring to reboot failed signage loops cleanly.`}
 
-Location: Public Venue Glitch Submissions Pipeline
-Node: ais-glitch-hunter-daemon
---------------------------------------------------------------
-Stay watchful. The matrix is flickering.`;
+${data.attachedDocUrl ? `Full Formal Audit Document (Google Docs):\n${data.attachedDocUrl}\n` : ''}
+========================================================================
+This automated advisory was prepared by the glitch-hunter.tumblr.com
+community forensic reporting suite to aid public safety and digital signage integrity.
+`;
 
     const rawMessage = [
       `To: ${recipientEmail}`,
@@ -230,13 +261,13 @@ Stay watchful. The matrix is flickering.`;
       body: JSON.stringify({ raw: base64Url }),
     });
 
-    const data = await res.json();
+    const respData = await res.json();
     if (!res.ok) {
-      throw new Error(data.error?.message || 'Failed to send email via Gmail API');
+      throw new Error(respData.error?.message || 'Failed to send authority notification email');
     }
-    return { success: true, messageId: data.id };
+    return { success: true, messageId: respData.id };
   } catch (err: any) {
-    console.error('Error sending TOTP email:', err);
+    console.error('Error sending authority notification email:', err);
     return { success: false, error: err.message || 'Gmail transmission failed' };
   }
 };

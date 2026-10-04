@@ -71,7 +71,7 @@ export const XtermHackerConsole: React.FC<XtermHackerConsoleProps> = ({ onExecut
           term.writeln('  \x1b[1;32mmatrix\x1b[0m            - Stream raw green phosphor matrix binary');
           term.writeln('  \x1b[1;32mtumblr-theme\x1b[0m      - Inspect active theme operators & NPF blocks');
           term.writeln('  \x1b[1;32mdrive-logs\x1b[0m        - Check Google Drive backstage directory status');
-          term.writeln('  \x1b[1;32mtotp-status\x1b[0m       - Verify email TOTP dispatch daemon');
+          term.writeln('  \x1b[1;32mauthority-notify\x1b[0m  - Check automated Gmail authority security advisory daemon');
           term.writeln('  \x1b[1;32mclear\x1b[0m             - Clear terminal screen');
           break;
 
@@ -112,11 +112,12 @@ export const XtermHackerConsole: React.FC<XtermHackerConsoleProps> = ({ onExecut
           term.writeln('  Ready to persist incident reports, telemetry, & scripts.');
           break;
 
+        case 'authority-notify':
         case 'totp-status':
-          term.writeln('\x1b[1;32m[GMAIL TOTP ENGINE // ACTIVE]\x1b[0m');
-          term.writeln('  Generator: 6-digit cryptographic hash');
-          term.writeln('  Expiry: 10 minutes');
-          term.writeln('  Prevents spam and ensures authentic community submissions.');
+          term.writeln('\x1b[1;32m[GMAIL AUTHORITY ADVISORY DAEMON // ARMED]\x1b[0m');
+          term.writeln('  Scope: Automated disclosure to facility/municipal IT management');
+          term.writeln('  Payload: Incident ref, kiosk OS breakdown, and remediation advice');
+          term.writeln('  Protection: Eliminates spam and automates responsible vulnerability reporting.');
           break;
 
         case 'clear':
@@ -176,7 +177,7 @@ export const XtermHackerConsole: React.FC<XtermHackerConsoleProps> = ({ onExecut
             <Cpu className="h-3 w-3" /> BUFFER: 1024L
           </span>
           <span className="flex items-center gap-1 text-cyan-400">
-            <Shield className="h-3 w-3" /> TOTP_DAEMON: ARMED
+            <Shield className="h-3 w-3" /> AUTHORITY_DISPATCH: ARMED
           </span>
         </div>
       </div>

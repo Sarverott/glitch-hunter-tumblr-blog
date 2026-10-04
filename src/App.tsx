@@ -313,7 +313,7 @@ export default function App() {
 
           <div className="flex items-center gap-4 text-[11px]">
             <span>Google Drive API: v3</span>
-            <span>Gmail TOTP: Active</span>
+            <span>Gmail Authority Dispatch: Active</span>
             <span>Google Docs Audits: Ready</span>
             <span>Google Forms /contact: Linked</span>
             <span>Gemini 3.1 Pro & Thinking: Armed</span>

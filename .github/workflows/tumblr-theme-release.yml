@@ -1,0 +1,102 @@
+name: Build & Release Tumblr Theme
+
+on:
+  # Allows triggering the workflow manually by hand in GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release Version Tag (e.g., v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+      release_title:
+        description: 'Release Title'
+        required: false
+        default: 'Glitch Hunter Tumblr Theme Release'
+      create_github_release:
+        description: 'Publish official GitHub Release with downloadable theme assets'
+        type: boolean
+        required: false
+        default: true
+
+  # Also runs automatically when a git tag is pushed (e.g., git tag v1.0.0 && git push --tags)
+  push:
+    tags:
+      - 'v*'
+    paths:
+      - 'src/services/tumblrTheme.ts'
+      - 'scripts/build-tumblr-theme.ts'
+      - '.github/workflows/tumblr-theme-release.yml'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-release-theme:
+    name: Build & Publish Tumblr Theme
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm install
+
+      - name: Validate TypeScript Codebase
+        run: npm run lint
+
+      - name: Compile Full-Stack Web Application
+        run: npm run build
+
+      - name: Generate Tumblr Theme & Embedded /contact Subpage
+        run: npm run build:theme
+
+      - name: Verify Generated Assets
+        run: |
+          echo ">>> Verifying generated Tumblr artifacts:"
+          ls -la dist-tumblr/
+          test -f dist-tumblr/theme.html || { echo "theme.html missing!"; exit 1; }
+          test -f dist-tumblr/contact.html || { echo "contact.html missing!"; exit 1; }
+          test -f dist-tumblr/README.md || { echo "README.md missing!"; exit 1; }
+          echo ">>> Artifact verification passed!"
+
+      - name: Upload Theme Artifacts to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: glitch-hunter-tumblr-theme-bundle
+          path: dist-tumblr/
+          retention-days: 30
+
+      - name: Create GitHub Release with Theme Assets
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_github_release == 'true') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_version || github.ref_name }}
+          name: ${{ github.event.inputs.release_title || github.ref_name }}
+          body: |
+            # 👾 Glitch Hunter // Tumblr Custom Theme Release
+            **Target Blog:** [glitch-hunter.tumblr.com](https://glitch-hunter.tumblr.com)
+
+            ### Included Distribution Files:
+            - **`theme.html`**: Complete Tumblr theme template with Matrix aesthetic, CRT phosphor scanlines, NPF post support, and responsive HUD.
+            - **`contact.html`**: Embedded `/contact` subpage layout for public glitch submissions and telemetry reports.
+            - **`README.md`**: Step-by-step setup guide for Tumblr Dashboard.
+
+            ### Quick Installation:
+            1. Copy the contents of `theme.html` into Tumblr's Custom HTML Editor (`https://www.tumblr.com/customize/glitch-hunter`).
+            2. In Tumblr Blog Settings -> **Pages**, create a page with URL `/contact`, select **Custom layout**, and paste the contents of `contact.html`.
+          files: |
+            dist-tumblr/theme.html
+            dist-tumblr/contact.html
+            dist-tumblr/README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

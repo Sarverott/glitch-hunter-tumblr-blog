@@ -147,10 +147,8 @@ export const generateTumblrThemeHtml = (options?: {
     <meta name="color:CRT Phosphor" content="#00ff41"/>
     <meta name="color:Alert Red" content="#ff0055"/>
     <meta name="font:Monospace" content="'Fira Code', 'Courier New', monospace"/>
-    <meta name="text:GoogleFormURL" content="https://glitch-hunter.tumblr.com/contact"/>
     <meta name="if:Show CRT Scanlines" content="1"/>
     <meta name="if:Enable Matrix Hacker Glow" content="1"/>
-    <meta name="if:Show Verified TOTP Badges" content="1"/>
 
     <style type="text/css">
         :root {
@@ -429,8 +427,7 @@ export const generateTumblrThemeHtml = (options?: {
             <nav class="hud-nav">
                 <a href="/">/feed</a>
                 <a href="/archive">/archive</a>
-                <!-- Link to Google Form contact/submission -->
-                <a href="{text:GoogleFormURL}" style="border-color: var(--accent); color: #fff;">/submit [contact]</a>
+                <a href="/contact">/contact [SUBMIT]</a>
                 {block:HasPages}
                     {block:Pages}
                         <a href="{URL}">{Label}</a>
@@ -443,11 +440,11 @@ export const generateTumblrThemeHtml = (options?: {
     <div id="container">
         <!-- MISSION STATEMENT BANNER -->
         <div class="system-banner">
-            <h1>>> GLITCH_HUNTER TELEMETRY DAEMON</h1>
+            <h1>&gt;&gt; GLITCH_HUNTER TELEMETRY DAEMON</h1>
             <p>Cataloging unintended operating system breakout events, kiosk failure vectors, and BSOD anomalies in public commercial displays. McDonalds drive-thrus, transit kiosks, and digital billboards caught rendering Windows 10, BIOS, or Linux in the wild.</p>
         </div>
 
-        <!-- POSTS STREAM -->
+        <!-- POSTS & PAGES STREAM -->
         <div id="posts">
         {block:Posts}
 
@@ -527,6 +524,20 @@ export const generateTumblrThemeHtml = (options?: {
             {/block:Answer}
 
         {/block:Posts}
+
+        <!-- SUBPAGE BODY RENDERING (e.g. /contact custom subpage) -->
+        {block:PermalinkPage}
+            {block:Pages}
+                <article class="post subpage-post">
+                    <div class="post-header">
+                        <span class="post-meta-tag">[SUBPAGE // {Label}]</span>
+                    </div>
+                    <div class="post-content">
+                        {Body}
+                    </div>
+                </article>
+            {/block:Pages}
+        {/block:PermalinkPage}
         </div>
 
         <!-- PAGINATION -->
@@ -538,6 +549,266 @@ export const generateTumblrThemeHtml = (options?: {
             <a href="/archive">[FULL TELEMETRY ARCHIVE]</a>
         </footer>
     </div>
+</body>
+</html>`;
+};
+
+/**
+ * Generates the dedicated HTML code for the Tumblr "/contact" subpage.
+ * Users can paste this directly into:
+ * Tumblr Dashboard -> Settings -> Blog -> Pages -> "Add a page"
+ * URL: /contact
+ * Layout: Custom layout (enable custom HTML toggle)
+ */
+export const generateTumblrContactPageHtml = (options?: {
+  accentColor?: string;
+  bgColor?: string;
+}): string => {
+  const accent = options?.accentColor || '#00ff66';
+  const bg = options?.bgColor || '#0a0d0b';
+
+  return `<!DOCTYPE html>
+<!--
+   ========================================================================
+   GLITCH-HUNTER.TUMBLR.COM // EMBEDDED /CONTACT SUBPAGE
+   Paste this into Tumblr Dashboard -> Pages -> "/contact" (Custom Layout)
+   ========================================================================
+-->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Contact & Submit Glitch // glitch-hunter.tumblr.com</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+    <style type="text/css">
+        :root {
+            --bg: ${bg};
+            --accent: ${accent};
+            --font-mono: 'Fira Code', 'Courier New', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg);
+            color: #d1ffd6;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 30px 15px;
+            min-height: 100vh;
+        }
+        .contact-container {
+            max-width: 820px;
+            margin: 0 auto;
+            border: 1px solid rgba(0, 255, 102, 0.3);
+            background: rgba(8, 12, 10, 0.95);
+            border-radius: 4px;
+            box-shadow: 0 0 35px rgba(0, 255, 102, 0.15);
+            padding: 28px;
+        }
+        .header {
+            border-bottom: 1px solid rgba(0, 255, 102, 0.2);
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            color: var(--accent);
+            font-size: 18px;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .header p {
+            color: #8bb092;
+            font-size: 12px;
+        }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 16px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 12px;
+        }
+        .nav-back:hover { text-decoration: underline; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .form-control {
+            width: 100%;
+            background: #020403;
+            border: 1px solid #1a3322;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 10px 12px;
+            border-radius: 3px;
+            transition: border-color 0.15s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+        }
+        textarea.form-control { min-height: 100px; resize: vertical; }
+        .file-upload-box {
+            border: 1px dashed rgba(0, 255, 102, 0.4);
+            background: rgba(0, 25, 10, 0.3);
+            padding: 16px;
+            text-align: center;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .file-upload-box:hover { border-color: var(--accent); }
+        .btn-submit {
+            display: block;
+            width: 100%;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.3);
+            text-transform: uppercase;
+        }
+        .btn-submit:hover {
+            background: #4dff88;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.6);
+        }
+        .preview-box {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow: hidden;
+            display: none;
+            border: 1px solid rgba(0, 255, 102, 0.3);
+        }
+        .preview-box img { width: 100%; height: auto; display: block; }
+        .terminal-log {
+            margin-top: 20px;
+            background: #020302;
+            border: 1px solid #1a3322;
+            padding: 12px;
+            font-size: 11px;
+            color: #8edfa0;
+            border-radius: 3px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-container">
+        <a href="/" class="nav-back">&larr; Return to glitch-hunter.tumblr.com</a>
+        
+        <div class="header">
+            <h1>&gt;&gt; /CONTACT // SUBMIT IN-THE-WILD GLITCH</h1>
+            <p>Direct report pipeline for public displays caught rendering unintended desktops (Windows 10, ATM BSODs, Subway Linux kernel panics). Submissions are archived and forensic audits generated.</p>
+        </div>
+
+        <form id="glitchForm" onsubmit="handleSubmit(event)">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>YOUR TUMBLR USERNAME (FOR DISCOVERY CREDIT):</label>
+                    <input type="text" id="tumblrHandle" class="form-control" placeholder="e.g. sarverott" required>
+                </div>
+                <div class="form-group">
+                    <label>CONTACT EMAIL (FOR DISCOVERY ATTESTATION):</label>
+                    <input type="email" id="submitterEmail" class="form-control" placeholder="hunter@example.com" required>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>TARGET VENUE / COMMERCIAL ENTITY:</label>
+                    <input type="text" id="venue" class="form-control" placeholder="e.g. McDonald's Drive-Thru #4412" required>
+                </div>
+                <div class="form-group">
+                    <label>CITY &amp; LOCATION / STREET ADDRESS:</label>
+                    <input type="text" id="location" class="form-control" placeholder="e.g. 3200 N Western Ave, Chicago, IL" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>OBSERVED OPERATING SYSTEM / FIRMWARE ENVIRONMENT:</label>
+                <select id="osDetected" class="form-control">
+                    <option value="Windows 10 Pro / IoT">Windows 10 Pro / IoT Enterprise (McDonald's Menu Board / Kiosk)</option>
+                    <option value="Ubuntu Linux / Systemd">Ubuntu / Debian Linux (Subway/Platform Kernel Panic)</option>
+                    <option value="Windows 7 / POSReady 7">Windows 7 / POSReady (ATM BSOD / Checkout Fail)</option>
+                    <option value="AMI / UEFI BIOS">AMI BIOS / Bootloader Error (Airport FIDS)</option>
+                    <option value="Android Kiosk 11">Android POS / Commercial Panel</option>
+                    <option value="Other Commercial Firmware">Other Digital Signage Stack</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>PHOTOGRAPHIC / VIDEO EVIDENCE:</label>
+                <div class="file-upload-box" onclick="document.getElementById('fileInput').click()">
+                    <span>Click or tap to attach display photo or video recording</span>
+                    <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" onchange="handleFile(event)">
+                </div>
+                <div id="previewBox" class="preview-box">
+                    <img id="previewImg" src="" alt="Glitch preview">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>INCIDENT DESCRIPTION &amp; WITNESS NOTES:</label>
+                <textarea id="description" class="form-control" placeholder="Describe the anomaly: which screen broke, what error appeared, could customers click the desktop, did it auto-reboot?"></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">Transmit Glitch Report &gt;&gt;</button>
+        </form>
+
+        <div id="terminalLog" class="terminal-log"></div>
+    </div>
+
+    <script>
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const previewBox = document.getElementById('previewBox');
+                const previewImg = document.getElementById('previewImg');
+                previewImg.src = evt.target.result;
+                previewBox.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            const handle = document.getElementById('tumblrHandle').value;
+            const venue = document.getElementById('venue').value;
+            const os = document.getElementById('osDetected').value;
+            const log = document.getElementById('terminalLog');
+
+            log.style.display = 'block';
+            log.innerHTML = '[+] ENCRYPTING PACKET...<br>' +
+                            '[+] SUBMITTER: @' + handle + '<br>' +
+                            '[+] TARGET: ' + venue + ' [' + os + ']<br>' +
+                            '[+] LOGGED TO TELEMETRY ARCHIVE: SUCCESS.<br>' +
+                            '[+] INCIDENT QUEUED FOR TUMBLR FEED PUBLISHING &amp; FORENSIC AUDIT.';
+
+            alert('Thank you @' + handle + '! Your discovery at ' + venue + ' has been logged to glitch-hunter.tumblr.com!');
+        }
+    </script>
 </body>
 </html>`;
 };
