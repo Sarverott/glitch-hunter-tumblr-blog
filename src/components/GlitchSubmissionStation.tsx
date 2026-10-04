@@ -533,7 +533,29 @@ Focus on OS breakout, exposed desktop (e.g. Windows 10 Start button/taskbar), ki
             </button>
           </div>
 
-          <div className="relative rounded border border-emerald-500/30 bg-[#040605] p-4 max-h-[480px] overflow-y-auto">
+          {/* Live Preview of the Embedded Google Form */}
+          <div className="rounded border border-emerald-500/30 bg-[#070a08] p-4">
+            <div className="text-xs font-bold text-emerald-400 mb-3 flex items-center justify-between">
+              <span>LIVE EMBEDDED FORM PREVIEW (GOOGLE FORMS IFRAME):</span>
+              <span className="text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">
+                ✓ 100% Tumblr-Validator Approved (No Custom JS)
+              </span>
+            </div>
+            <div className="flex justify-center bg-black/60 p-4 rounded border border-emerald-500/20">
+              <iframe
+                src="https://docs.google.com/forms/d/e/1FAIpQLScmvM1-veLnuyvDEXIFhBXJ5ne-JD-J7X8CctpojjDfvXFmFg/viewform?embedded=true"
+                width="640"
+                height="560"
+                className="w-full max-w-[640px] rounded border border-emerald-500/30 bg-white"
+                title="Google Form Glitch Report"
+              >
+                Ładuję…
+              </iframe>
+            </div>
+          </div>
+
+          <div className="relative rounded border border-emerald-500/30 bg-[#040605] p-4 max-h-[350px] overflow-y-auto">
+            <div className="text-[10px] text-zinc-500 mb-2 font-bold uppercase">Ready-to-Paste HTML Code for Tumblr /contact:</div>
             <pre className="text-xs text-emerald-400/90 font-mono leading-relaxed whitespace-pre-wrap">
               {embeddedContactHtml}
             </pre>

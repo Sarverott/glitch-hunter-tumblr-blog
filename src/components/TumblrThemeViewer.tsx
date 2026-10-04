@@ -398,10 +398,34 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
                 <Download className="h-4 w-4" />
                 Download glitch-hunter-contact-page.html
               </button>
+
+              <span className="text-[11px] text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-1 rounded flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5" /> 100% Tumblr-Validator Compliant (Pure HTML+CSS &amp; Google Forms iframe)
+              </span>
             </div>
           </div>
 
-          <div className="relative rounded border border-emerald-500/30 bg-[#040605] p-4 max-h-[500px] overflow-y-auto">
+          {/* Live Preview of the Embedded Google Form */}
+          <div className="rounded border border-emerald-500/30 bg-[#070a08] p-4">
+            <div className="text-xs font-bold text-emerald-400 mb-3 flex items-center justify-between">
+              <span>LIVE EMBEDDED FORM PREVIEW (WHAT VISITORS SEE ON /CONTACT):</span>
+              <span className="text-zinc-500 text-[10px]">Google Docs Forms Embed</span>
+            </div>
+            <div className="flex justify-center bg-black/60 p-4 rounded border border-emerald-500/20">
+              <iframe
+                src="https://docs.google.com/forms/d/e/1FAIpQLScmvM1-veLnuyvDEXIFhBXJ5ne-JD-J7X8CctpojjDfvXFmFg/viewform?embedded=true"
+                width="640"
+                height="560"
+                className="w-full max-w-[640px] rounded border border-emerald-500/30 bg-white"
+                title="Google Form Glitch Report"
+              >
+                Ładuję…
+              </iframe>
+            </div>
+          </div>
+
+          <div className="relative rounded border border-emerald-500/30 bg-[#040605] p-4 max-h-[350px] overflow-y-auto">
+            <div className="text-[10px] text-zinc-500 mb-2 font-bold uppercase">Ready-to-Paste HTML Code:</div>
             <pre className="text-xs text-emerald-400/90 font-mono leading-relaxed whitespace-pre-wrap">
               {contactSubpageHtmlCode}
             </pre>
