@@ -3,204 +3,119 @@
  * High quality Three.js retro low-poly DOOM-styled glitching public kiosk scene
  * Features:
  * - Low-poly CRT terminal cabinet with 90s flat-shaded geometry
- * - Custom dynamic Canvas texture rendering authentic public display crashes (McDonald's Windows 10 desktop, BSOD, Linux Kernel Panic, BIOS)
+ * - Modular glitch screens extending BaseKioskScreen (McDonald's Win10, Kernel Panic, BSOD, TeamViewer, BIOS)
+ * - Dynamic custom data injection (custom venue, error message, remote payload)
+ * - Interactive CRT controls (reboot sequence, hard jitter trigger, camera reset)
  * - Software-renderer retro vertex jitter & displacement glitch shaders
- * - Interactive click-to-glitch state switching & camera orbiting
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as THREE from 'three';
-import { RefreshCw, Monitor, Zap, Terminal } from 'lucide-react';
+import {
+  RefreshCw,
+  Monitor,
+  Zap,
+  Terminal,
+  Power,
+  Sliders,
+  RotateCcw,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import {
+  REGISTERED_KIOSK_SCREENS,
+  BaseKioskScreen,
+  KioskCustomData,
+} from './kiosk-modes';
 
-interface DoomGlitchKioskProps {
+export interface DoomGlitchKioskProps {
   currentGlitchMode?: string;
+  initialCustomData?: KioskCustomData;
   onGlitchStateChange?: (stateName: string) => void;
 }
 
-export const GLITCH_MODES = [
-  { id: 'mcdonalds_win10', name: "McDonald's Win10 Breakout", color: '#0078d7', text: "WINDOWS 10 PRO - DESKTOP EXITED" },
-  { id: 'subway_kernel', name: 'Subway Linux Kernel Panic', color: '#000000', text: 'KERNEL PANIC: FATAL EXCEPTION IN INTERRUPT' },
-  { id: 'atm_bsod', name: 'ATM Blue Screen of Death', color: '#0000aa', text: 'CRITICAL_PROCESS_DIED (ntoskrnl.exe)' },
-  { id: 'billboard_teamviewer', name: 'LED Billboard TeamViewer', color: '#0055aa', text: 'TEAMVIEWER ID: 492 881 024' },
-  { id: 'bios_boot', name: 'Airport FIDS AMI BIOS Prompt', color: '#111111', text: 'CMOS BATTERY LOW // PRESS F1 TO RUN SETUP' },
-];
+export const GLITCH_MODES = REGISTERED_KIOSK_SCREENS.map((screen) => ({
+  id: screen.id,
+  name: screen.name,
+  color: screen.color,
+  text: screen.defaultSummary,
+  category: screen.osCategory,
+}));
 
-export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStateChange }) => {
+export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({
+  initialCustomData,
+  onGlitchStateChange,
+}) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [activeGlitchIndex, setActiveGlitchIndex] = useState(0);
   const [isGlitchingHard, setIsGlitchingHard] = useState(false);
+  const [isPoweredOn, setIsPoweredOn] = useState(true);
+  const [showDataEditor, setShowDataEditor] = useState(false);
   const [fps, setFps] = useState(60);
 
-  // References for three.js objects
+  // User customizable data rendered in real-time on the 3D CRT monitor
+  const [customData, setCustomData] = useState<KioskCustomData>({
+    venueName: "McDonald's Drive-Thru #4412",
+    customMessage: 'Fatal: Order display viewport lost focus. Exited to Windows Desktop.',
+    osDetected: 'Windows 10 Pro / IoT',
+    userPayload: '492 881 024',
+    incidentRef: 'GH-8821',
+    ...initialCustomData,
+  });
+
+  // Three.js instances
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const screenMeshRef = useRef<THREE.Mesh | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const glitchIntensityRef = useRef(1.0);
+  const kioskGroupRef = useRef<THREE.Group | null>(null);
 
-  // Update dynamic CRT Canvas Texture
-  const drawScreenContent = (modeIndex: number, hardGlitch: boolean) => {
+  // Active screen object from modular registry
+  const currentScreen = useMemo(
+    () => REGISTERED_KIOSK_SCREENS[activeGlitchIndex] || REGISTERED_KIOSK_SCREENS[0],
+    [activeGlitchIndex]
+  );
+
+  // Update dynamic CRT Canvas Texture via modular screen object
+  const drawScreenContent = (
+    modeIndex: number,
+    hardGlitch: boolean,
+    powered: boolean = true,
+    data: KioskCustomData = customData
+  ) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const mode = GLITCH_MODES[modeIndex];
     const w = canvas.width;
     const h = canvas.height;
 
-    // Base background
-    ctx.fillStyle = mode.color;
-    ctx.fillRect(0, 0, w, h);
-
-    if (mode.id === 'mcdonalds_win10') {
-      // Windows 10 desktop background
-      ctx.fillStyle = '#103554';
+    if (!powered) {
+      // Powered off CRT screen (black with faint phosphor dot)
+      ctx.fillStyle = '#020302';
       ctx.fillRect(0, 0, w, h);
-
-      // Windows 10 window light logo
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fillRect(w * 0.45, h * 0.25, w * 0.35, h * 0.45);
-
-      // Taskbar
-      ctx.fillStyle = '#0f141c';
-      ctx.fillRect(0, h - 48, w, 48);
-
-      // Windows Start button
-      ctx.fillStyle = '#0078d7';
-      ctx.fillRect(8, h - 40, 32, 32);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText('⊞', 16, h - 18);
-
-      // McDonald's NewPOS Error Box
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(80, 70, 350, 180);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(80, 70, 350, 32);
-      ctx.fillStyle = '#ffcc00';
-      ctx.font = 'bold 14px "Fira Code", monospace';
-      ctx.fillText("MCDONALD'S NEWPOS6 v4.2 - CRASH", 95, 92);
-
-      ctx.fillStyle = '#cc0000';
-      ctx.font = '13px sans-serif';
-      ctx.fillText('Fatal: Order display viewport lost focus.', 100, 130);
-      ctx.fillStyle = '#333333';
-      ctx.fillText('Exited to Windows Desktop shell.', 100, 155);
-      ctx.fillText('Memory Allocation Failure at 0x7FFE90', 100, 180);
-
-      // Recycle bin icon
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '11px sans-serif';
-      ctx.fillText('🗑 Recycle Bin', 20, 40);
-      ctx.fillText('📂 Menu_Promos_2026', 20, 80);
-      ctx.fillText('⚙️ Signage_Service.bat', 20, 120);
-
-    } else if (mode.id === 'subway_kernel') {
-      // Linux Kernel Panic
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '13px "Courier New", monospace';
-
-      const lines = [
-        '[  14.289102] Kernel panic - not syncing: Fatal exception in interrupt',
-        '[  14.289104] CPU: 1 PID: 0 Comm: swapper/1 Tainted: G        W',
-        '[  14.289106] Hardware name: TransitKiosk-Intel-Atom-E3940/IPC-8800',
-        '[  14.289108] Call Trace:',
-        '[  14.289110]  <IRQ>',
-        '[  14.289112]  dump_stack+0x6d/0x8b',
-        '[  14.289114]  panic+0x101/0x290',
-        '[  14.289116]  nmi_panic+0x34/0x38',
-        '[  14.289118]  transit_display_gpu_irq_handler+0x8a/0x120',
-        '[  14.289120]  handle_irq_event_percpu+0x32/0x70',
-        '[  14.289122] ---[ end Kernel panic - not syncing ]---',
-      ];
-      lines.forEach((line, idx) => {
-        ctx.fillText(line, 15, 30 + idx * 24);
-      });
-
-    } else if (mode.id === 'atm_bsod') {
-      // Windows BSOD
-      ctx.fillStyle = '#0078d7';
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '60px sans-serif';
-      ctx.fillText(':(', 40, 90);
-
-      ctx.font = '18px sans-serif';
-      ctx.fillText('Your ATM PC ran into a problem and needs to restart.', 40, 140);
-      ctx.fillText("We're just collecting some error info, and then we'll restart.", 40, 170);
-
-      ctx.font = '13px "Fira Code", monospace';
-      ctx.fillText('Stop code: CRITICAL_PROCESS_DIED', 40, 240);
-      ctx.fillText('What failed: win32kfull.sys (Wincor Nixdorf ATM Agent)', 40, 265);
-
-    } else if (mode.id === 'billboard_teamviewer') {
-      // TeamViewer prompt
-      ctx.fillStyle = '#0d2238';
-      ctx.fillRect(0, 0, w, h);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(60, 40, 390, 280);
-      ctx.fillStyle = '#00539f';
-      ctx.fillRect(60, 40, 390, 40);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 15px sans-serif';
-      ctx.fillText('TeamViewer 14 - Commercial Display Host', 80, 66);
-
-      ctx.fillStyle = '#333333';
-      ctx.font = '13px sans-serif';
-      ctx.fillText('Ready to connect (secure connection)', 80, 110);
-
-      ctx.font = 'bold 22px "Fira Code", monospace';
-      ctx.fillStyle = '#00539f';
-      ctx.fillText('Your ID:   492 881 024', 80, 160);
-      ctx.fillText('Password:  7294', 80, 200);
-
-      ctx.font = '11px sans-serif';
-      ctx.fillStyle = '#888888';
-      ctx.fillText('Times Square High-Brightness Signage Node #7', 80, 260);
-
-    } else {
-      // BIOS prompt
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#ffff55';
-      ctx.font = '14px "Fira Code", monospace';
-      ctx.fillText('American Megatrends Inc. (AMI) BIOS v2.18', 20, 35);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Main Processor: Intel(R) Celeron(R) CPU J1900 @ 1.99GHz', 20, 65);
-      ctx.fillText('Memory Testing : 4194304K OK', 20, 90);
-      ctx.fillText('Checking NVRAM... DONE', 20, 115);
-      ctx.fillStyle = '#ff5555';
-      ctx.fillText('CMOS Settings Wrong', 20, 160);
-      ctx.fillText('CMOS Date/Time Not Set', 20, 185);
-      ctx.fillText('Press F1 to Run SETUP', 20, 230);
-      ctx.fillText('Press F2 to load default values and continue', 20, 255);
+      ctx.fillStyle = 'rgba(0, 255, 102, 0.4)';
+      ctx.fillRect(w / 2 - 2, h / 2 - 2, 4, 4);
+      if (textureRef.current) textureRef.current.needsUpdate = true;
+      return;
     }
 
-    // Scanline & glitch artifacts
-    if (hardGlitch) {
-      for (let i = 0; i < 20; i++) {
-        const gy = Math.random() * h;
-        const gh = Math.random() * 12 + 2;
-        ctx.fillStyle = `rgba(${Math.random() > 0.5 ? '0,255,102' : '255,0,80'}, ${Math.random() * 0.7 + 0.3})`;
-        ctx.fillRect(0, gy, w, gh);
-      }
-    }
-
-    // Horizontal scanlines on canvas
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-    for (let y = 0; y < h; y += 4) {
-      ctx.fillRect(0, y, w, 2);
-    }
+    const screenInstance = REGISTERED_KIOSK_SCREENS[modeIndex] || REGISTERED_KIOSK_SCREENS[0];
+    screenInstance.render(ctx, w, h, hardGlitch, data);
 
     if (textureRef.current) {
       textureRef.current.needsUpdate = true;
     }
   };
+
+  // Re-draw when customData or mode changes
+  useEffect(() => {
+    drawScreenContent(activeGlitchIndex, isGlitchingHard, isPoweredOn, customData);
+  }, [customData, activeGlitchIndex, isPoweredOn]);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -217,7 +132,7 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
     screenTexture.magFilter = THREE.NearestFilter;
     textureRef.current = screenTexture;
 
-    drawScreenContent(activeGlitchIndex, false);
+    drawScreenContent(activeGlitchIndex, false, true, customData);
 
     // Scene setup
     const scene = new THREE.Scene();
@@ -229,6 +144,7 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
 
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
     camera.position.set(0, 1.2, 4.6);
+    cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
@@ -253,52 +169,63 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
     // -------------------------------------------------------------
     const kioskGroup = new THREE.Group();
     scene.add(kioskGroup);
+    kioskGroupRef.current = kioskGroup;
 
     // 1. Kiosk Heavy Steel Pedestal / Body (Low-poly chamfered)
     const bodyGeo = new THREE.BoxGeometry(1.6, 2.2, 1.1, 2, 2, 2);
     const bodyMat = new THREE.MeshStandardMaterial({
       color: 0x181c19,
-      roughness: 0.6,
-      metalness: 0.5,
+      roughness: 0.85,
+      metalness: 0.3,
       flatShading: true,
     });
     const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
     bodyMesh.position.y = -0.5;
     kioskGroup.add(bodyMesh);
 
-    // 2. Kiosk Front Vent Grille
-    const ventGeo = new THREE.PlaneGeometry(1.1, 0.4, 4, 2);
-    const ventMat = new THREE.MeshBasicMaterial({
-      color: 0x0f2b18,
-      wireframe: true,
-    });
-    const ventMesh = new THREE.Mesh(ventGeo, ventMat);
-    ventMesh.position.set(0, -0.7, 0.56);
-    kioskGroup.add(ventMesh);
+    // Kiosk ventilation grill slats (DOOM retro industrial look)
+    const ventMat = new THREE.MeshBasicMaterial({ color: 0x050705 });
+    for (let i = 0; i < 4; i++) {
+      const ventGeo = new THREE.BoxGeometry(1.2, 0.05, 0.05);
+      const vent = new THREE.Mesh(ventGeo, ventMat);
+      vent.position.set(0, -0.2 - i * 0.15, 0.56);
+      kioskGroup.add(vent);
+    }
 
-    // 3. CRT Monitor Bezel (Angled monitor housing)
-    const bezelGeo = new THREE.BoxGeometry(2.0, 1.5, 1.2, 2, 2, 2);
+    // 2. Heavy CRT Monitor Housing (Slanted retro industrial enclosure)
+    const monitorGeo = new THREE.BoxGeometry(2.0, 1.5, 1.4, 2, 2, 2);
+    const monitorMat = new THREE.MeshStandardMaterial({
+      color: 0x222823,
+      roughness: 0.7,
+      metalness: 0.4,
+      flatShading: true,
+    });
+    const monitorMesh = new THREE.Mesh(monitorGeo, monitorMat);
+    monitorMesh.position.set(0, 1.0, 0);
+    monitorMesh.rotation.x = -0.08;
+    kioskGroup.add(monitorMesh);
+
+    // Monitor Bezel Frame (Beveled CRT border)
+    const bezelGeo = new THREE.BoxGeometry(1.7, 1.25, 0.15);
     const bezelMat = new THREE.MeshStandardMaterial({
-      color: 0x1f2622,
-      roughness: 0.4,
-      metalness: 0.6,
+      color: 0x0c0f0d,
+      roughness: 0.9,
       flatShading: true,
     });
     const bezelMesh = new THREE.Mesh(bezelGeo, bezelMat);
-    bezelMesh.position.set(0, 1.0, 0.1);
+    bezelMesh.position.set(0, 1.0, 0.65);
     bezelMesh.rotation.x = -0.08;
     kioskGroup.add(bezelMesh);
 
-    // 4. CRT Curved Glass Screen (Where the glitch happens)
-    const screenGeo = new THREE.PlaneGeometry(1.65, 1.15, 8, 8);
-
-    // Slight low-poly curve to screen vertices
-    const pos = screenGeo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const vx = pos.getX(i);
-      const vy = pos.getY(i);
-      const curvature = (1 - (vx * vx) / 1.5) * (1 - (vy * vy) / 1.5);
-      pos.setZ(i, curvature * 0.08);
+    // 3. Curved Low-poly CRT Glass Screen (Emits dynamic canvas texture)
+    const screenGeo = new THREE.PlaneGeometry(1.48, 1.08, 8, 8);
+    // Subtle vertex curve for retro CRT bulb distortion
+    const posAttr = screenGeo.attributes.position;
+    for (let i = 0; i < posAttr.count; i++) {
+      const x = posAttr.getX(i);
+      const y = posAttr.getY(i);
+      const distFromCenter = (x * x + y * y) * 0.08;
+      posAttr.setZ(i, -distFromCenter);
     }
     screenGeo.computeVertexNormals();
 
@@ -306,48 +233,63 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
       map: screenTexture,
       toneMapped: false,
     });
+
     const screenMesh = new THREE.Mesh(screenGeo, screenMat);
-    screenMesh.position.set(0, 1.02, 0.72);
+    screenMesh.position.set(0, 1.0, 0.73);
     screenMesh.rotation.x = -0.08;
-    screenMeshRef.current = screenMesh;
     kioskGroup.add(screenMesh);
+    screenMeshRef.current = screenMesh;
 
-    // 5. Retro Wireframe HUD Border around screen
-    const wireframeGeo = new THREE.EdgesGeometry(bezelGeo);
-    const wireframeMat = new THREE.LineBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.4 });
-    const wireframe = new THREE.LineSegments(wireframeGeo, wireframeMat);
-    wireframe.position.copy(bezelMesh.position);
-    wireframe.rotation.copy(bezelMesh.rotation);
-    kioskGroup.add(wireframe);
+    // Glowing screen phosphor halo
+    const glowGeo = new THREE.PlaneGeometry(1.52, 1.12);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0x00ff66,
+      transparent: true,
+      opacity: 0.08,
+      blending: THREE.AdditiveBlending,
+    });
+    const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+    glowMesh.position.set(0, 1.0, 0.74);
+    glowMesh.rotation.x = -0.08;
+    kioskGroup.add(glowMesh);
 
-    // 6. Floating Data Shards / Low-Poly Glitch particles
+    // 4. Industrial Warning Stripes & Decals
+    const stripeGeo = new THREE.BoxGeometry(1.62, 0.1, 0.02);
+    const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+    const stripeMesh = new THREE.Mesh(stripeGeo, stripeMat);
+    stripeMesh.position.set(0, -1.3, 0.56);
+    kioskGroup.add(stripeMesh);
+
+    // 5. Retro Floating Dust & Matrix Sparks
+    const particleCount = 60;
     const particleGeo = new THREE.BufferGeometry();
-    const particleCount = 120;
     const particlePositions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount * 3; i += 3) {
       particlePositions[i] = (Math.random() - 0.5) * 6;
-      particlePositions[i + 1] = (Math.random() - 0.5) * 4 + 0.5;
-      particlePositions[i + 2] = (Math.random() - 0.5) * 4;
+      particlePositions[i + 1] = Math.random() * 4 - 1;
+      particlePositions[i + 2] = (Math.random() - 0.5) * 6;
     }
     particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMat = new THREE.PointsMaterial({
       color: 0x00ff66,
       size: 0.04,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending,
     });
     const particles = new THREE.Points(particleGeo, particleMat);
     scene.add(particles);
 
-    // Ground Grid
-    const gridHelper = new THREE.GridHelper(10, 20, 0x00ff66, 0x003311);
-    gridHelper.position.y = -1.6;
-    scene.add(gridHelper);
-
-    // Mouse drag interaction
+    // -------------------------------------------------------------
+    // INTERACTION: MOUSE ROTATION & GLITCH SHAKE
+    // -------------------------------------------------------------
     let isDragging = false;
     let prevMouseX = 0;
     let prevMouseY = 0;
+    let targetRotationY = 0.2;
+    let targetRotationX = 0;
+
+    const domElement = renderer.domElement;
 
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
@@ -359,43 +301,54 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
       if (!isDragging) return;
       const deltaX = e.clientX - prevMouseX;
       const deltaY = e.clientY - prevMouseY;
-      kioskGroup.rotation.y += deltaX * 0.008;
-      kioskGroup.rotation.x = Math.max(-0.3, Math.min(0.3, kioskGroup.rotation.x + deltaY * 0.008));
       prevMouseX = e.clientX;
       prevMouseY = e.clientY;
+
+      targetRotationY += deltaX * 0.008;
+      targetRotationX += deltaY * 0.005;
+      targetRotationX = Math.max(-0.4, Math.min(0.4, targetRotationX));
     };
 
     const onMouseUp = () => {
       isDragging = false;
     };
 
-    const domElement = renderer.domElement;
     domElement.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
 
-    // Animation Loop
+    // Click on 3D kiosk screen to trigger glitch or switch mode
+    const onCanvasClick = (e: MouseEvent) => {
+      if (Math.abs(e.clientX - prevMouseX) < 4 && Math.abs(e.clientY - prevMouseY) < 4) {
+        triggerGlitchPulse();
+      }
+    };
+    domElement.addEventListener('click', onCanvasClick);
+
+    // Animation loop
     let animationFrameId: number;
-    let clock = new THREE.Clock();
+    let lastTime = performance.now();
     let frameCount = 0;
-    let lastFpsTime = performance.now();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
 
-      frameCount++;
       const now = performance.now();
-      if (now - lastFpsTime >= 1000) {
+      const elapsed = now * 0.001;
+      frameCount++;
+
+      if (now - lastTime >= 1000) {
         setFps(frameCount);
         frameCount = 0;
-        lastFpsTime = now;
+        lastTime = now;
       }
 
-      // Gentle idle wobble
-      if (!isDragging) {
-        kioskGroup.rotation.y = Math.sin(elapsed * 0.5) * 0.15;
-      }
+      // Smooth dampening rotation
+      kioskGroup.rotation.y += (targetRotationY - kioskGroup.rotation.y) * 0.08;
+      kioskGroup.rotation.x += (targetRotationX - kioskGroup.rotation.x) * 0.08;
+
+      // Idle DOOM industrial breathing float
+      kioskGroup.position.y = Math.sin(elapsed * 1.5) * 0.02;
 
       // Glitch flicker jitter
       if (Math.random() < 0.04 * glitchIntensityRef.current) {
@@ -428,6 +381,7 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
     return () => {
       cancelAnimationFrame(animationFrameId);
       domElement.removeEventListener('mousedown', onMouseDown);
+      domElement.removeEventListener('click', onCanvasClick);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('resize', handleResize);
@@ -438,44 +392,108 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
     };
   }, []);
 
+  const triggerGlitchPulse = () => {
+    setIsGlitchingHard(true);
+    glitchIntensityRef.current = 3.5;
+    drawScreenContent(activeGlitchIndex, true, isPoweredOn, customData);
+
+    setTimeout(() => {
+      setIsGlitchingHard(false);
+      glitchIntensityRef.current = 1.0;
+      drawScreenContent(activeGlitchIndex, false, isPoweredOn, customData);
+    }, 550);
+  };
+
   const triggerNextGlitch = () => {
-    const nextIdx = (activeGlitchIndex + 1) % GLITCH_MODES.length;
+    const nextIdx = (activeGlitchIndex + 1) % REGISTERED_KIOSK_SCREENS.length;
     setActiveGlitchIndex(nextIdx);
     setIsGlitchingHard(true);
     glitchIntensityRef.current = 3.0;
 
-    drawScreenContent(nextIdx, true);
+    drawScreenContent(nextIdx, true, isPoweredOn, customData);
 
     if (onGlitchStateChange) {
-      onGlitchStateChange(GLITCH_MODES[nextIdx].name);
+      onGlitchStateChange(REGISTERED_KIOSK_SCREENS[nextIdx].name);
     }
 
     setTimeout(() => {
       setIsGlitchingHard(false);
       glitchIntensityRef.current = 1.0;
-      drawScreenContent(nextIdx, false);
-    }, 600);
+      drawScreenContent(nextIdx, false, isPoweredOn, customData);
+    }, 550);
+  };
+
+  const togglePower = () => {
+    const nextState = !isPoweredOn;
+    setIsPoweredOn(nextState);
+    if (!nextState) {
+      // Power down animation
+      drawScreenContent(activeGlitchIndex, false, false, customData);
+    } else {
+      // Power on reboot burst
+      setIsGlitchingHard(true);
+      drawScreenContent(activeGlitchIndex, true, true, customData);
+      setTimeout(() => {
+        setIsGlitchingHard(false);
+        drawScreenContent(activeGlitchIndex, false, true, customData);
+      }, 600);
+    }
+  };
+
+  const resetCamera = () => {
+    if (kioskGroupRef.current) {
+      kioskGroupRef.current.rotation.y = 0.2;
+      kioskGroupRef.current.rotation.x = 0;
+    }
   };
 
   return (
-    <div className="relative w-full rounded-md border border-emerald-500/30 bg-black/90 p-3 shadow-[0_0_30px_rgba(0,255,102,0.15)] overflow-hidden">
+    <div className="relative w-full rounded-md border border-emerald-500/30 bg-black/90 p-3 shadow-[0_0_30px_rgba(0,255,102,0.15)] overflow-hidden font-mono">
       {/* 3D Viewport Header */}
-      <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2 mb-2 font-mono text-xs">
+      <div className="flex flex-wrap items-center justify-between border-b border-emerald-500/20 pb-2 mb-2 text-xs gap-2">
         <div className="flex items-center gap-2 text-emerald-400">
           <Monitor className="h-4 w-4 animate-pulse" />
-          <span className="font-bold tracking-wider">DOOM_LOWPOLY_CRT_VIEWPORT // v1.09</span>
+          <span className="font-bold tracking-wider">DOOM_LOWPOLY_CRT_VIEWPORT // MODULAR_v2.0</span>
           <span className="bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded text-[10px] border border-emerald-500/30">
             {fps} FPS
           </span>
+          <span className="text-[10px] text-zinc-500 hidden md:inline">
+            [{REGISTERED_KIOSK_SCREENS.length} MODULAR SCREENS]
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-zinc-400 hidden sm:inline">[Drag to rotate 3D Kiosk]</span>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={resetCamera}
+            title="Reset Camera Orientation"
+            className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700 text-xs transition"
+          >
+            <RotateCcw className="h-3 w-3" /> Center
+          </button>
+
+          <button
+            onClick={togglePower}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-semibold transition ${
+              isPoweredOn
+                ? 'bg-rose-950/60 border-rose-500/50 text-rose-300 hover:bg-rose-900/60'
+                : 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/60'
+            }`}
+          >
+            <Power className="h-3 w-3" /> {isPoweredOn ? 'Shutdown CRT' : 'Boot CRT'}
+          </button>
+
+          <button
+            onClick={triggerGlitchPulse}
+            className="flex items-center gap-1 px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 transition active:scale-95 text-xs font-semibold"
+          >
+            <Zap className="h-3 w-3" /> Glitch Shock
+          </button>
+
           <button
             onClick={triggerNextGlitch}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/40 transition active:scale-95 text-xs font-semibold"
+            className="flex items-center gap-1 px-3 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/40 transition active:scale-95 text-xs font-semibold"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Switch Glitch State
+            <RefreshCw className="h-3.5 w-3.5" /> Next Screen
           </button>
         </div>
       </div>
@@ -483,40 +501,40 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
       {/* Three.js Canvas Container */}
       <div
         ref={mountRef}
-        className="w-full h-[320px] sm:h-[400px] cursor-grab active:cursor-grabbing rounded bg-black/60 relative overflow-hidden"
+        className="w-full h-[320px] sm:h-[390px] cursor-grab active:cursor-grabbing rounded bg-black/60 relative overflow-hidden"
       >
         {/* Retro scanline simulation on overlay */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.4)_50%)] bg-[length:100%_4px] opacity-70" />
 
         {/* Current Anomaly Indicator Badge */}
-        <div className="absolute bottom-3 left-3 pointer-events-none z-10 flex flex-col gap-1 font-mono text-xs">
+        <div className="absolute bottom-3 left-3 pointer-events-none z-10 flex flex-col gap-1 text-xs">
           <div className="flex items-center gap-1.5 bg-black/85 border border-emerald-500/40 px-2.5 py-1 rounded text-emerald-400 backdrop-blur shadow-md">
             <Zap className={`h-3 w-3 ${isGlitchingHard ? 'text-rose-500 animate-spin' : 'text-amber-400'}`} />
-            <span className="text-[11px] text-zinc-400">ACTIVE RENDER:</span>
-            <span className="font-bold">{GLITCH_MODES[activeGlitchIndex].name}</span>
+            <span className="text-[11px] text-zinc-400">ACTIVE SCREEN:</span>
+            <span className="font-bold">{currentScreen.name}</span>
           </div>
-          <div className="text-[10px] text-emerald-500/70 bg-black/60 px-2 py-0.5 rounded border border-emerald-500/20">
-            {GLITCH_MODES[activeGlitchIndex].text}
+          <div className="text-[10px] text-emerald-400/90 bg-black/80 px-2 py-0.5 rounded border border-emerald-500/20">
+            {customData.venueName} &bull; {currentScreen.osCategory}
           </div>
         </div>
 
-        {/* Status indicator right corner */}
+        {/* Status indicator top right */}
         <div className="absolute top-3 right-3 pointer-events-none z-10">
-          <div className="bg-black/80 border border-emerald-500/30 px-2 py-1 rounded font-mono text-[10px] text-emerald-400/80">
-            VERTEX_DISPLACEMENT: ACTIVE
+          <div className="bg-black/80 border border-emerald-500/30 px-2 py-1 rounded text-[10px] text-emerald-400/80">
+            {isPoweredOn ? 'CRT_PHOSPHOR: ACTIVE' : 'CRT_POWER: STANDBY'}
           </div>
         </div>
       </div>
 
-      {/* Quick Select Buttons */}
-      <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-1.5 font-mono text-[11px]">
-        {GLITCH_MODES.map((m, idx) => (
+      {/* Quick Screen Selectors */}
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-[11px]">
+        {REGISTERED_KIOSK_SCREENS.map((screen, idx) => (
           <button
-            key={m.id}
+            key={screen.id}
             onClick={() => {
               setActiveGlitchIndex(idx);
-              drawScreenContent(idx, true);
-              setTimeout(() => drawScreenContent(idx, false), 400);
+              drawScreenContent(idx, true, isPoweredOn, customData);
+              setTimeout(() => drawScreenContent(idx, false, isPoweredOn, customData), 350);
             }}
             className={`px-2 py-1.5 rounded text-left border transition truncate ${
               activeGlitchIndex === idx
@@ -524,9 +542,63 @@ export const DoomGlitchKiosk3D: React.FC<DoomGlitchKioskProps> = ({ onGlitchStat
                 : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:border-emerald-500/40 hover:text-zinc-200'
             }`}
           >
-            {m.name}
+            {screen.name}
           </button>
         ))}
+      </div>
+
+      {/* Interactive Custom Data Injection Panel */}
+      <div className="mt-3 rounded border border-emerald-500/25 bg-[#070b08] p-3">
+        <button
+          onClick={() => setShowDataEditor(!showDataEditor)}
+          className="w-full flex items-center justify-between text-xs text-emerald-400 font-bold hover:text-emerald-300 transition"
+        >
+          <span className="flex items-center gap-1.5">
+            <Sliders className="h-3.5 w-3.5" />
+            3D CRT DATA INJECTION &amp; REAL-TIME TELEMETRY CUSTOMIZER
+          </span>
+          <span className="flex items-center gap-1 text-[11px] text-zinc-500">
+            {showDataEditor ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {showDataEditor ? 'Hide Controls' : 'Edit 3D Screen Data'}
+          </span>
+        </button>
+
+        {showDataEditor && (
+          <div className="mt-3 pt-3 border-t border-emerald-500/20 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div>
+              <label className="block text-[11px] text-zinc-400 mb-1">Target Venue / Asset Name:</label>
+              <input
+                type="text"
+                value={customData.venueName || ''}
+                onChange={(e) => setCustomData((prev) => ({ ...prev, venueName: e.target.value }))}
+                placeholder="e.g. McDonald's Drive-Thru #4412"
+                className="w-full rounded border border-zinc-700 bg-black px-2.5 py-1.5 text-white focus:border-emerald-500 focus:outline-hidden text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] text-zinc-400 mb-1">CRT Error Message / Panic Text:</label>
+              <input
+                type="text"
+                value={customData.customMessage || ''}
+                onChange={(e) => setCustomData((prev) => ({ ...prev, customMessage: e.target.value }))}
+                placeholder="e.g. NewPOS6 crashed to Windows desktop"
+                className="w-full rounded border border-zinc-700 bg-black px-2.5 py-1.5 text-white focus:border-emerald-500 focus:outline-hidden text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] text-zinc-400 mb-1">Remote ID / Custom Payload:</label>
+              <input
+                type="text"
+                value={customData.userPayload || ''}
+                onChange={(e) => setCustomData((prev) => ({ ...prev, userPayload: e.target.value }))}
+                placeholder="e.g. 492 881 024 or IRQ_0x7FFE"
+                className="w-full rounded border border-zinc-700 bg-black px-2.5 py-1.5 text-white focus:border-emerald-500 focus:outline-hidden text-xs"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

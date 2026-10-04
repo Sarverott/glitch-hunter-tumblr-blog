@@ -277,24 +277,24 @@ export const generateTumblrThemeHtml = (options?: {
 
         /* Container */
         #container {
-            max-width: 860px;
-            margin: 40px auto;
-            padding: 0 20px;
+            max-width: 1560px;
+            margin: 30px auto;
+            padding: 0 16px;
         }
 
         /* Mission Banner */
         .system-banner {
             border: 1px solid rgba(0, 255, 102, 0.3);
             background: rgba(0, 25, 10, 0.6);
-            padding: 20px;
-            margin-bottom: 40px;
+            padding: 18px 22px;
+            margin-bottom: 28px;
             border-left: 4px solid var(--accent);
         }
 
         .system-banner h1 {
-            font-size: 18px;
+            font-size: 17px;
             color: var(--accent);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             letter-spacing: 1px;
         }
 
@@ -303,15 +303,42 @@ export const generateTumblrThemeHtml = (options?: {
             font-size: 13px;
         }
 
-        /* Tumblr Posts Feed */
+        /* Tumblr Posts Feed - Responsive Grid: 1 col (mobile), 3 cols (800px+), 5 cols (1200px+) */
+        #posts {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 800px) {
+            #posts {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 16px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            #posts {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                gap: 14px;
+            }
+        }
+
         .post {
             border: 1px solid rgba(0, 255, 102, 0.2);
             background: rgba(8, 12, 10, 0.85);
-            margin-bottom: 35px;
+            margin-bottom: 0;
             border-radius: 4px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
             transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .subpage-post {
+            grid-column: 1 / -1;
         }
 
         .post:hover {
@@ -320,7 +347,7 @@ export const generateTumblrThemeHtml = (options?: {
         }
 
         .post-header {
-            padding: 12px 18px;
+            padding: 10px 14px;
             background: rgba(0, 20, 10, 0.5);
             border-bottom: 1px solid rgba(0, 255, 102, 0.15);
             display: flex;
@@ -338,58 +365,63 @@ export const generateTumblrThemeHtml = (options?: {
         }
 
         .post-content {
-            padding: 24px;
+            padding: 16px;
+            flex: 1;
         }
 
         .post-content h2, .post-content h3 {
-            font-size: 18px;
+            font-size: 15px;
             color: #ffffff;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
+            line-height: 1.4;
         }
 
         .post-content img {
             width: 100%;
             height: auto;
+            max-height: 280px;
+            object-fit: cover;
             border: 1px solid rgba(0, 255, 102, 0.3);
             border-radius: 2px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             filter: contrast(1.05) saturate(1.1);
         }
 
         .post-caption {
-            font-size: 13px;
-            line-height: 1.7;
+            font-size: 12px;
+            line-height: 1.6;
             color: #c0dec4;
-            margin-top: 14px;
+            margin-top: 10px;
         }
 
         /* Tags */
         .post-tags {
-            margin-top: 18px;
+            margin-top: 14px;
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
             list-style: none;
         }
 
         .post-tags li a {
-            font-size: 11px;
+            font-size: 10px;
             background: rgba(0, 255, 102, 0.08);
             border: 1px solid rgba(0, 255, 102, 0.2);
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 2px;
             color: #8edfa0;
         }
 
         /* Footer & Reblog Controls */
         .post-footer {
-            padding: 12px 18px;
+            padding: 10px 14px;
             border-top: 1px solid rgba(0, 255, 102, 0.15);
             background: rgba(0, 15, 8, 0.4);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 12px;
+            font-size: 11px;
+            margin-top: auto;
         }
 
         .notes-count {
@@ -427,7 +459,7 @@ export const generateTumblrThemeHtml = (options?: {
             <nav class="hud-nav">
                 <a href="/">/feed</a>
                 <a href="/archive">/archive</a>
-                <a href="/contact">/contact [SUBMIT]</a>
+                <a href="/SEND_GLITCH.exe">/SEND_GLITCH.exe</a>
                 {block:HasPages}
                     {block:Pages}
                         <a href="{URL}">{Label}</a>
@@ -570,15 +602,15 @@ export const generateTumblrContactPageHtml = (options?: {
   return `<!DOCTYPE html>
 <!--
    ========================================================================
-   GLITCH-HUNTER.TUMBLR.COM // EMBEDDED /CONTACT SUBPAGE (GOOGLE FORM)
-   Paste this into Tumblr Dashboard -> Pages -> "/contact" (Custom Layout)
+   GLITCH-HUNTER.TUMBLR.COM // EMBEDDED /SEND_GLITCH.exe SUBPAGE (GOOGLE FORM)
+   Paste this into Tumblr Dashboard -> Pages -> "/SEND_GLITCH.exe" (Custom Layout)
    Compliant with Tumblr HTML validator: 100% pure HTML & CSS (No custom scripts)
    ========================================================================
 -->
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Contact &amp; Submit Glitch // glitch-hunter.tumblr.com</title>
+    <title>/SEND_GLITCH.exe // Submit Glitch // glitch-hunter.tumblr.com</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
     <style type="text/css">

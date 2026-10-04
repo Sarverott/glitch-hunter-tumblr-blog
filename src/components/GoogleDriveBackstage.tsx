@@ -24,6 +24,9 @@ import {
   uploadBackstageFile,
   DriveFileItem,
 } from '../services/googleWorkspace';
+import kioskProbeCode from '../../resources/scripts/kiosk_watchdog_probe.py?raw';
+import vramHarvesterCode from '../../resources/scripts/vram_display_harvester.sh?raw';
+import tumblrSyncerCode from '../../resources/scripts/tumblr_api_syncer.js?raw';
 
 interface GoogleDriveBackstageProps {
   accessToken: string | null;
@@ -35,51 +38,17 @@ const DEFAULT_SAMPLE_SCRIPTS = [
   {
     name: 'kiosk_watchdog_probe.py',
     description: 'Polls commercial HDMI ports to detect Windows 10 desktop breakouts vs active POS apps',
-    code: `# Kiosk Watchdog Probe v2.4
-import psutil, time, os
-
-def monitor_kiosk_shell():
-    print("[+] Scanning process tree for shell breakout...")
-    for proc in psutil.process_iter(['pid', 'name']):
-        if proc.info['name'] == 'explorer.exe':
-            print(f"[!] ALERT: Explorer.exe running in foreground (PID {proc.info['pid']})")
-            print("[!] Kiosk lockdown violated! Windows 10 Start Menu accessible.")
-            return True
-    print("[+] Kiosk application contained.")
-    return False
-
-if __name__ == '__main__':
-    monitor_kiosk_shell()
-`,
+    code: kioskProbeCode,
   },
   {
     name: 'vram_display_harvester.sh',
     description: 'Dumps GPU framebuffer memory slices from signage players to diagnose memory leaks',
-    code: `#!/usr/bin/env bash
-echo "[*] Harvesting VRAM telemetry for glitch-hunter.tumblr.com..."
-timestamp=$(date +%s)
-echo "[+] Framebuffer dump: /dev/fb0 -> drive/backstage/vram_\${timestamp}.raw"
-echo "[+] Resolution: 1920x1080 32bpp BGRA"
-echo "[+] Detected BSOD memory dump: ntoskrnl.exe CRITICAL_PROCESS_DIED"
-echo "[*] Telemetry saved to Google Drive Backstage"
-`,
+    code: vramHarvesterCode,
   },
   {
     name: 'tumblr_api_syncer.js',
-    description: 'Synchronizes verified TOTP public display submissions with Tumblr Neue Post Format (NPF)',
-    code: `// Tumblr NPF Post Generator
-const generateNPFGlitchPost = (glitchData) => {
-  return {
-    content: [
-      { type: "image", media: [{ url: glitchData.photoUrl }] },
-      { type: "text", subtype: "heading1", text: glitchData.venue + " // Glitch Found" },
-      { type: "text", text: "Reported OS: " + glitchData.osDetected },
-      { type: "text", text: "Submitter credit: @" + glitchData.tumblrHandle }
-    ],
-    tags: ["glitchinthematrix", "publicdisplay", "windows10"]
-  };
-};
-`,
+    description: 'Synchronizes verified public display submissions with Tumblr Neue Post Format (NPF)',
+    code: tumblrSyncerCode,
   },
 ];
 

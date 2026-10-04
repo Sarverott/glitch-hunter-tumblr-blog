@@ -20,12 +20,12 @@ export const XtermHackerConsole: React.FC<XtermHackerConsoleProps> = ({ onExecut
   useEffect(() => {
     if (!terminalRef.current) return;
 
-    // Initialize xterm
+    // Initialize xterm with halved, ultra-dense hacker font size
     const term = new XTerminal({
       cursorBlink: true,
       fontFamily: "'Fira Code', 'VT323', monospace",
-      fontSize: 13,
-      lineHeight: 1.25,
+      fontSize: 8,
+      lineHeight: 1.15,
       theme: {
         background: '#070a08',
         foreground: '#33ff77',

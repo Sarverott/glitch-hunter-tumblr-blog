@@ -174,7 +174,7 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
                 onClick={onOpenSubmitForm}
                 className="px-2.5 py-1 rounded border border-emerald-500 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 font-bold text-[11px] transition"
               >
-                /contact [embedded form]
+                /SEND_GLITCH.exe [SUBMIT]
               </button>
             </div>
           </div>
@@ -199,77 +199,73 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
             ))}
           </div>
 
-          {/* Posts Feed */}
-          <div className="space-y-6">
+          {/* Posts Feed - Responsive Grid: 1 col (mobile), 3 cols (800px+), 5 cols (1200px+) */}
+          <div className="grid grid-cols-1 min-[800px]:grid-cols-3 min-[1200px]:grid-cols-5 gap-3.5">
             {filteredPosts.map((post) => {
               const isLiked = likedPosts[post.id];
               return (
                 <article
                   key={post.id}
-                  className="rounded border border-emerald-500/25 bg-black/80 overflow-hidden shadow-[0_4px_25px_rgba(0,0,0,0.5)] transition hover:border-emerald-500/50"
+                  className="flex flex-col h-full rounded border border-emerald-500/25 bg-black/80 overflow-hidden shadow-[0_4px_25px_rgba(0,0,0,0.5)] transition hover:border-emerald-500/50"
                 >
                   {/* Post Header */}
-                  <div className="flex flex-wrap items-center justify-between border-b border-emerald-500/15 bg-emerald-950/20 px-4 py-2 text-xs">
-                    <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+                  <div className="flex flex-wrap items-center justify-between border-b border-emerald-500/15 bg-emerald-950/20 px-3 py-1.5 text-xs">
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px]">
                       <span>POST_{post.id}</span>
-                      <span className="text-zinc-600">//</span>
-                      <span className="text-zinc-400">{post.date}</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {post.verifiedTotp && (
-                        <span className="flex items-center gap-1 text-[10px] bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30 font-semibold">
-                          <ShieldCheck className="h-3 w-3 text-emerald-400" />
-                          VERIFIED SUBMISSION
+                        <span className="flex items-center gap-1 text-[9px] bg-emerald-950/80 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30 font-semibold">
+                          <ShieldCheck className="h-2.5 w-2.5 text-emerald-400" />
+                          VERIFIED
                         </span>
                       )}
-                      <span className="text-zinc-500 text-[11px]">
-                        Credit: @{post.submitterCredit}
+                      <span className="text-zinc-500 text-[10px]">
+                        @{post.submitterCredit}
                       </span>
                     </div>
                   </div>
 
                   {/* Post Content */}
-                  <div className="p-5">
+                  <div className="p-3.5 flex-1 flex flex-col">
                     {post.title && (
-                      <h3 className="text-base font-bold text-white mb-3 tracking-wide">
+                      <h3 className="text-sm font-bold text-white mb-2 tracking-wide line-clamp-2">
                         {post.title}
                       </h3>
                     )}
 
                     {/* Photo Post */}
                     {post.type === 'photo' && post.photoUrl && (
-                      <div className="relative rounded overflow-hidden border border-emerald-500/30 mb-4 bg-zinc-950">
+                      <div className="relative rounded overflow-hidden border border-emerald-500/30 mb-2.5 bg-zinc-950">
                         <img
                           src={post.photoUrl}
                           alt={post.title}
-                          className="w-full max-h-[460px] object-cover"
+                          className="w-full h-36 object-cover"
                         />
-                        <div className="absolute bottom-2 left-2 bg-black/85 backdrop-blur px-2.5 py-1 rounded text-[11px] text-emerald-300 border border-emerald-500/30 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                          <span>VENUE: {post.venue}</span>
-                          <span className="text-zinc-500">|</span>
-                          <span className="text-amber-300">OS: {post.osDetected}</span>
+                        <div className="absolute bottom-1.5 left-1.5 bg-black/85 backdrop-blur px-2 py-0.5 rounded text-[10px] text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 truncate max-w-[90%]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span className="truncate">{post.venue}</span>
                         </div>
                       </div>
                     )}
 
                     {/* Quote Post */}
                     {post.type === 'quote' && (
-                      <blockquote className="my-4 border-l-4 border-emerald-500 pl-4 italic text-emerald-300 text-sm">
+                      <blockquote className="my-2 border-l-2 border-emerald-500 pl-3 italic text-emerald-300 text-xs">
                         "{post.quote}"
-                        {post.source && <footer className="mt-2 text-xs text-zinc-500 not-italic">— {post.source}</footer>}
+                        {post.source && <footer className="mt-1 text-[10px] text-zinc-500 not-italic">— {post.source}</footer>}
                       </blockquote>
                     )}
 
                     {/* Q&A / Answer Post */}
                     {post.type === 'answer' && (
-                      <div className="my-3 space-y-3">
-                        <div className="p-3 rounded bg-zinc-900/60 border border-zinc-800 text-xs">
-                          <span className="text-emerald-400 font-bold block mb-1">@{post.asker} asked:</span>
+                      <div className="my-2 space-y-2 text-xs">
+                        <div className="p-2 rounded bg-zinc-900/60 border border-zinc-800 text-[11px]">
+                          <span className="text-emerald-400 font-bold block mb-0.5">@{post.asker}:</span>
                           <p className="text-zinc-200">{post.question}</p>
                         </div>
-                        <div className="text-xs text-zinc-300 pl-2 border-l-2 border-emerald-500/50">
+                        <div className="text-[11px] text-zinc-300 pl-2 border-l-2 border-emerald-500/50">
                           {post.answer}
                         </div>
                       </div>
@@ -278,19 +274,19 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
                     {/* Caption */}
                     {post.caption && (
                       <div
-                        className="text-xs text-zinc-300 leading-relaxed space-y-2 mt-3"
+                        className="text-[11px] text-zinc-300 leading-relaxed line-clamp-3 mt-1"
                         dangerouslySetInnerHTML={{ __html: post.caption }}
                       />
                     )}
 
                     {/* Post Tags */}
                     {post.tags && post.tags.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-1.5">
+                      <div className="mt-2.5 flex flex-wrap gap-1">
                         {post.tags.map((t) => (
                           <span
                             key={t}
                             onClick={() => setSelectedTag(t)}
-                            className="cursor-pointer text-[11px] text-emerald-400/80 bg-emerald-950/40 hover:bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/20 transition"
+                            className="cursor-pointer text-[10px] text-emerald-400/80 bg-emerald-950/40 hover:bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/20 transition"
                           >
                             #{t}
                           </span>
@@ -300,29 +296,29 @@ export const TumblrThemeViewer: React.FC<TumblrThemeViewerProps> = ({
                   </div>
 
                   {/* Post Footer with Tumblr Notes & Like/Reblog buttons */}
-                  <div className="flex items-center justify-between border-t border-emerald-500/15 bg-black/60 px-5 py-3 text-xs">
-                    <span className="text-zinc-400 text-[11px]">
+                  <div className="flex items-center justify-between border-t border-emerald-500/15 bg-black/60 px-3 py-2 text-[11px] mt-auto">
+                    <span className="text-zinc-400 text-[10px]">
                       {post.notesCount + (isLiked ? 1 : 0)} notes
                     </span>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleLike(post.id)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition border ${
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded transition border ${
                           isLiked
                             ? 'bg-rose-950/60 border-rose-500 text-rose-400'
                             : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
                         }`}
                       >
-                        <Heart className={`h-3.5 w-3.5 ${isLiked ? 'fill-rose-500' : ''}`} />
+                        <Heart className={`h-3 w-3 ${isLiked ? 'fill-rose-500' : ''}`} />
                         <span>{isLiked ? 'Liked' : 'Like'}</span>
                       </button>
 
                       <button
                         onClick={() => alert(`Post #${post.id} copied to reblog buffer for glitch-hunter.tumblr.com!`)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition"
                       >
-                        <Repeat className="h-3.5 w-3.5" />
+                        <Repeat className="h-3 w-3" />
                         <span>Reblog</span>
                       </button>
                     </div>
